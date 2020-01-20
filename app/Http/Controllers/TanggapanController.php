@@ -22,7 +22,11 @@ class TanggapanController extends Controller {
             $tanggapan = Tanggapan::OrderBy("tanggapan_id", "DESC")->paginate(10)->toArray();
             
             if (!$tanggapan) {
-                abort(404);
+                return response()->json([
+                    'success' => false,
+                    'status' => 404,
+                    'message' => 'Object not Found'
+                ], 404);
             }
 
             $response = [
@@ -172,7 +176,11 @@ class TanggapanController extends Controller {
         $tanggapan = Tanggapan::find($id);
         
         if (!$tanggapan) {
-            abort(404);
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'Object not Found'
+            ], 404);
         }
 
         if ($acceptHeader === 'application/json' || $acceptHeader === 'application/xml') {    
@@ -240,7 +248,11 @@ class TanggapanController extends Controller {
             $tanggapan = Tanggapan::find($id);
 
             if (!$tanggapan) {
-                abort(404);
+                return response()->json([
+                    'success' => false,
+                    'status' => 404,
+                    'message' => 'Object not Found'
+                ], 404);
             }
             
             $tanggapan->fill($input);
@@ -299,7 +311,11 @@ class TanggapanController extends Controller {
             $tanggapan = Tanggapan::find($id);
 
             if (!$tanggapan) {
-                abort(404);
+                return response()->json([
+                    'success' => false,
+                    'status' => 404,
+                    'message' => 'Object not Found'
+                ], 404);
             }
 
             $tanggapan->delete();

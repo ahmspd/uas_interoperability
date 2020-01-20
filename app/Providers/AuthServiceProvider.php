@@ -2,11 +2,6 @@
 
 namespace App\Providers;
 
-//use App\User;
-use App\Models\Petugas;
-use App\Models\Keluhan;
-use App\Models\Saran;
-use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 

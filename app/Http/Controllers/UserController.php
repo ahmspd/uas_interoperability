@@ -23,6 +23,14 @@ class UserController extends Controller {
 		} else {
 			$user = User::OrderBy("user_id","DESC")->paginate(10);
 		}
+
+		if (!$user) {
+			return response()->json([
+				'success' => false,
+				'status' => 404,
+				'message' => 'Object not Found'
+			], 404);
+		}
 		
 		if ($acceptHeader === 'application/json' || $acceptHeader === 'application/xml') {
 			// Response Accept : 'application/json'
@@ -64,9 +72,19 @@ class UserController extends Controller {
 		$acceptHeader = $request->header('Accept');
 
 		$user = User::find($id);
-		
-		if (!$user || Auth::guard('user')->user()->user_id  != $id) {
-			abort(404);
+
+		if (Gate::allows('admin') || Auth::guard('user')->user()->user_id == $id) {
+			$user = User::find($id);
+		} else {
+			return response('You are Unauthorized', 403);
+		}
+
+		if (!$user) {
+			return response()->json([
+				'success' => false,
+				'status' => 404,
+				'message' => 'Object not Found'
+			], 404);
 		}
 
 		if ($acceptHeader === 'application/json' || $acceptHeader === 'application/xml') {
@@ -105,7 +123,7 @@ class UserController extends Controller {
 		$acceptHeader = $request->hedaer('Accept');
 		$contentTypeHeader = $request->header('Content-Type');
 
-		if (Gate::denies('admin')) {
+		if (Gate::allows('admin') || Auth::guard('user')->user()->user_id != $id) {
 			return response()->json([
 				'success' => false,
 				'status' => 403,
@@ -122,7 +140,11 @@ class UserController extends Controller {
 				$user = User::find($id);
 		
 				if (!$user) {
-					abort(404);
+					return response()->json([
+						'success' => false,
+						'status' => 404,
+						'message' => 'Object not Found'
+					], 404);
 				}
 
 				if (Auth::guard('user')->user()->user_id === $id) {
@@ -173,7 +195,7 @@ class UserController extends Controller {
 	public function destroy(Request $request, $id){
 		$acceptHeader = $request->header('Accept');
 
-		if (Gate::allows('admin')) {
+		if (Gate::allows('admin') || Auth::guard('user')->user()->user_id != $id) {
 			return response()->json([
 				'success' => false,
 				'status' => 403,
@@ -185,7 +207,11 @@ class UserController extends Controller {
 			$user = User::find($id);
 
 			if (!$user) {
-				abort(404);
+				return response()->json([
+					'success' => false,
+					'status' => 404,
+					'message' => 'Object not Found'
+				], 404);
 			}	
 
 			if ($id == Auth::guard('user')->user()->user_id) {

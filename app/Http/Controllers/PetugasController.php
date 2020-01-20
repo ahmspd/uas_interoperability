@@ -29,7 +29,11 @@ class PetugasController extends Controller {
                 $petugas = Petugas::OrderBy("petugas_id", "DESC")->first()->paginate(10)->toArray();
 
                 if (!$petugas) {
-                    abort(404);
+                    return response()->json([
+                        'success' => false,
+                        'status' => 404,
+                        'message' => 'Object not Found'
+                    ], 404);
                 }
 
                 $response = [
@@ -72,7 +76,11 @@ class PetugasController extends Controller {
                 $petugas = Petugas::Where(['petugas_id' => Auth::guard('admin')->user()->petugas_id])->OrderBy("petugas_id", "DESC")->paginate(1)->toArray();
 
                 if (!$petugas) {
-                    abort(404);
+                    return response()->json([
+                        'success' => false,
+                        'status' => 404,
+                        'message' => 'Object not Found'
+                    ], 404);
                 }
 
                 // Response Accept : 'application/json'
@@ -115,35 +123,37 @@ class PetugasController extends Controller {
             ], 403);
         }
         
+        if (Auth::guard('admin')->user()->role === 'super admin' || Auth::guard('admin')->user()->petugas_id == $id) {
+            $petugas = Petugas::find($id);
+        }
+
+        if (!$petugas) {
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'Object not Found'
+            ], 404);
+        }
+
         $acceptHeader = $request->header('Accept');
 
         if ($acceptHeader === 'application/json' || $acceptHeader === 'application/xml') {
-            if (Auth::guard('admin')->user()->role === 'super admin' || $id == Auth::guard('admin')->user()->petugas_id ) {
-                $petugas = Petugas::find($id);
+            // Response Accept : 'application/json'
+            if ($acceptHeader === 'application/json') {
+                return response()->json($petugas, 200);
+            }
 
-                if (!$petugas) {
-                    abort(404);
-                }
-                
-                // Response Accept : 'application/json'
-                if ($acceptHeader === 'application/json') {
-                    return response()->json($petugas, 200);
-                }
-
-                // Response Accept : 'application/xml'
-                else {
-                    $xml = new \SimpleXMLElement('<Petugas/>');
+            // Response Accept : 'application/xml'
+            else {
+                $xml = new \SimpleXMLElement('<Petugas/>');
                     
-                    $xml->addChild('petugas_id', $petugas->petugas_id);
-                    $xml->addChild('role', $petugas->role);
-                    $xml->addChild('email', $petugas->email);
-                    $xml->addChild('created_at', $petugas->created_at);
-                    $xml->addChild('updated_at', $petugas->updated_at);
+                $xml->addChild('petugas_id', $petugas->petugas_id);
+                $xml->addChild('role', $petugas->role);
+                $xml->addChild('email', $petugas->email);
+                $xml->addChild('created_at', $petugas->created_at);
+                $xml->addChild('updated_at', $petugas->updated_at);
 
-                    return $xml->asXML();
-                }
-            } else {
-                return response('You are Unauthorized', 403);
+                return $xml->asXML();
             }
         } else {
             return response('Not Acceptable!', 406);
@@ -190,7 +200,11 @@ class PetugasController extends Controller {
                 $petugas = Petugas::find($id);
 
                 if (!$petugas) {
-                    abort(404);
+                    return response()->json([
+                        'success' => false,
+                        'status' => 404,
+                        'message' => 'Object not Found'
+                    ], 404);
                 }
 
                 $petugas->fill($input);
@@ -241,7 +255,11 @@ class PetugasController extends Controller {
                 $petugas = Petugas::find($id);
 
                 if (!$petugas) {
-                    abort(404);
+                    return response()->json([
+                        'success' => false,
+                        'status' => 404,
+                        'message' => 'Object not Found'
+                    ], 404);
                 }
 
                 $petugas->delete();

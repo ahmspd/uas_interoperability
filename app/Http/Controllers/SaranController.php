@@ -20,7 +20,11 @@ class SaranController extends Controller {
             $saran = Saran::OrderBy("user_id", "DESC")->paginate(10)->toArray();
 
             if (!$saran) {
-                abort(404);
+                return response()->json([
+                    'success' => false,
+                    'status' => 404,
+                    'message' => 'Object not Found'
+                ], 404);
             }
 
             $response = [
@@ -152,7 +156,11 @@ class SaranController extends Controller {
             $saran = Saran::find($id);
 
             if (!$saran) {
-                abort(404);
+                return response()->json([
+                    'success' => false,
+                    'status' => 404,
+                    'message' => 'Object not Found'
+                ], 404);
             }
 
             // Response Accept : 'application/json'
@@ -187,7 +195,9 @@ class SaranController extends Controller {
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id) {
-        if (Gate::allows('admin')) {
+        $saran = Saran::find($id);
+
+        if (Gate::allows('admin') || $saran->user_id != Auth::guard('user')->user()->user_id) {
             return response()->json([
                 'success' => false,
                 'status' => 403,
@@ -214,9 +224,12 @@ class SaranController extends Controller {
         $contentTypeHeader = $request->header('Content-Type');
         
         if ($acceptHeader === 'application/json' || $acceptHeader === 'application/xml') {
-            $saran = Saran::find($id);
             if (!$saran) {
-                abort(404);
+                return response()->json([
+                    'success' => false,
+                    'status' => 404,
+                    'message' => 'Object not Found'
+                ], 404);
             }
             $saran->fill($input);
             $saran->save();
@@ -264,8 +277,9 @@ class SaranController extends Controller {
      */
 	public function destroy(Request $request, $id){
         $acceptHeader = $request->header('Accept');
+        $saran = Saran::find($id);
 
-        if (Gate::allows('admin')) {
+        if (Gate::allows('admin') || $saran->user_id != Auth::guard('user')->user()->user_id) {
             return response()->json([
                 'success' => false,
                 'status' => 403,
@@ -273,14 +287,16 @@ class SaranController extends Controller {
             ], 403);
         }
         
+        if (!$saran) {
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'Object not Found'
+            ], 404);
+        }
+        
         // Validating Header : 'Accept'
         if ($acceptHeader === 'application/json' || $acceptHeader === 'application/xml') {
-            $saran = Saran::find($id);
-
-            if (!$saran || $saran->user_id != Auth::guard('user')->user()->user_id) {
-                abort(404);
-            }
-            
             $saran->delete();
                 
             $response = [
