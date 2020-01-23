@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Auth\UserAuthController;
 use App\Models\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -70,14 +71,7 @@ class UserController extends Controller {
 	*/
 	public function show(Request $request, $id){
 		$acceptHeader = $request->header('Accept');
-
 		$user = User::find($id);
-
-		if (Gate::allows('admin') || Auth::guard('user')->user()->user_id == $id) {
-			$user = User::find($id);
-		} else {
-			return response('You are Unauthorized', 403);
-		}
 
 		if (!$user) {
 			return response()->json([
@@ -85,6 +79,12 @@ class UserController extends Controller {
 				'status' => 404,
 				'message' => 'Object not Found'
 			], 404);
+		}
+
+		if (Gate::allows('admin') || Auth::guard('user')->user()->user_id == $id) {
+			$user = User::find($id);
+		} else {
+			return response('You are Unauthorized', 403);
 		}
 
 		if ($acceptHeader === 'application/json' || $acceptHeader === 'application/xml') {
@@ -120,40 +120,36 @@ class UserController extends Controller {
 	* @return \Illuminate\Http\Response
 	*/
 	public function update(Request $request, $id){
-		$acceptHeader = $request->hedaer('Accept');
+		$acceptHeader = $request->header('Accept');
 		$contentTypeHeader = $request->header('Content-Type');
-
-		if (Gate::allows('admin') || Auth::guard('user')->user()->user_id != $id) {
+		$user = User::find($id);
+		
+		if (!$user) {
+			return response()->json([
+				'success' => false,
+				'status' => 404,
+				'message' => 'Object not Found'
+			], 404);
+		}
+		
+		if (Gate::allows('admin') || $id != Auth::guard('user')->user()->user_id) {
 			return response()->json([
 				'success' => false,
 				'status' => 403,
 				'message' => 'You are Unauthorized'
 			], 403);
 		}
-
+		
 		$input = $request->all();
-
+		
 		// Validation Rules
-
 		if ($acceptHeader === 'application/json' || $acceptHeader === 'application/xml') {
 			if ($contentTypeHeader === 'application/json' || $contentTypeHeader === 'application/xml') {
-				$user = User::find($id);
-		
-				if (!$user) {
-					return response()->json([
-						'success' => false,
-						'status' => 404,
-						'message' => 'Object not Found'
-					], 404);
-				}
-
-				if (Auth::guard('user')->user()->user_id === $id) {
+				if (Auth::guard('user')->user()->user_id == $id) {
 					$user->fill($input);
-
 					// Response Accept & Content-Type : 'application/json'
 					if ($acceptHeader === 'application/json' && $contentTypeHeader === 'application/json') {
 						$user->save();
-
 						return response()->json($user,200);
 					} 
 
@@ -194,6 +190,15 @@ class UserController extends Controller {
 	*/
 	public function destroy(Request $request, $id){
 		$acceptHeader = $request->header('Accept');
+		$user = User::find($id);
+
+		if (!$user) {
+			return response()->json([
+				'success' => false,
+				'status' => 404,
+				'message' => 'Object not Found'
+			], 404);
+		}	
 
 		if (Gate::allows('admin') || Auth::guard('user')->user()->user_id != $id) {
 			return response()->json([
@@ -204,16 +209,6 @@ class UserController extends Controller {
 		}
 
 		if ($acceptHeader === 'application/json' || $acceptHeader === 'application/xml') {
-			$user = User::find($id);
-
-			if (!$user) {
-				return response()->json([
-					'success' => false,
-					'status' => 404,
-					'message' => 'Object not Found'
-				], 404);
-			}	
-
 			if ($id == Auth::guard('user')->user()->user_id) {
 				$user->delete();
 

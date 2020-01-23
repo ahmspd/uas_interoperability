@@ -41,7 +41,7 @@ Route::group(['middleware' => ['auth']], function ($router) {
    // User End-Point
     $router->get('/user', 'UserController@index');
     $router->get('/user/{id}', 'UserController@show');
-    $router->put('/user', 'UserController@update');
+    $router->put('/user/{id}', 'UserController@update');
     $router->delete('/user/{id}', 'UserController@destroy');
 
     // Keluhan End-Point

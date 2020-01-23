@@ -15,18 +15,17 @@ class SaranController extends Controller {
      */
     public function index(Request $request) {
         $acceptHeader = $request->header('Accept');
+        $saran = Saran::OrderBy("user_id", "DESC")->paginate(10)->toArray();
+
+        if (!$saran) {
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'Object not Found'
+            ], 404);
+        }
 
         if ($acceptHeader === 'application/json' || $acceptHeader === 'application/xml') {
-            $saran = Saran::OrderBy("user_id", "DESC")->paginate(10)->toArray();
-
-            if (!$saran) {
-                return response()->json([
-                    'success' => false,
-                    'status' => 404,
-                    'message' => 'Object not Found'
-                ], 404);
-            }
-
             $response = [
                 "total_count" => $saran["total"],
                 "limit" => $saran["per_page"],
@@ -151,18 +150,17 @@ class SaranController extends Controller {
      */
     public function show(Request $request, $id) {
         $acceptHeader = $request->header('Accept');
+        $saran = Saran::find($id);
+
+        if (!$saran) {
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'Object not Found'
+            ], 404);
+        }
 
         if ($acceptHeader === 'application/json' || $acceptHeader === 'application/xml') {
-            $saran = Saran::find($id);
-
-            if (!$saran) {
-                return response()->json([
-                    'success' => false,
-                    'status' => 404,
-                    'message' => 'Object not Found'
-                ], 404);
-            }
-
             // Response Accept : 'application/json'
             if ($acceptHeader === 'application/json') {
                 return response()->json($saran, 200);
@@ -195,7 +193,17 @@ class SaranController extends Controller {
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id) {
+        $acceptHeader = $request->header('Accept');
+        $contentTypeHeader = $request->header('Content-Type');
         $saran = Saran::find($id);
+
+        if(!$saran) {
+            return response()->json([
+                'success' => false,
+                'status' => 403,
+                'message' => 'Data not Found'
+            ], 404);
+        }
 
         if (Gate::allows('admin') || $saran->user_id != Auth::guard('user')->user()->user_id) {
             return response()->json([
@@ -220,17 +228,8 @@ class SaranController extends Controller {
             return response()->json($validator->errors(), 400);
         }
 
-        $acceptHeader = $request->header('Accept');
-        $contentTypeHeader = $request->header('Content-Type');
         
         if ($acceptHeader === 'application/json' || $acceptHeader === 'application/xml') {
-            if (!$saran) {
-                return response()->json([
-                    'success' => false,
-                    'status' => 404,
-                    'message' => 'Object not Found'
-                ], 404);
-            }
             $saran->fill($input);
             $saran->save();
 
@@ -279,20 +278,20 @@ class SaranController extends Controller {
         $acceptHeader = $request->header('Accept');
         $saran = Saran::find($id);
 
-        if (Gate::allows('admin') || $saran->user_id != Auth::guard('user')->user()->user_id) {
-            return response()->json([
-                'success' => false,
-                'status' => 403,
-                'message' => 'You are Unauthorized'
-            ], 403);
-        }
-        
         if (!$saran) {
             return response()->json([
                 'success' => false,
                 'status' => 404,
                 'message' => 'Object not Found'
             ], 404);
+        }
+
+        if (Gate::allows('admin') || $saran->user_id != Auth::guard('user')->user()->user_id) {
+            return response()->json([
+                'success' => false,
+                'status' => 403,
+                'message' => 'You are Unauthorized'
+            ], 403);
         }
         
         // Validating Header : 'Accept'

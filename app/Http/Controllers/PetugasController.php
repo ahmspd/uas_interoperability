@@ -168,6 +168,18 @@ class PetugasController extends Controller {
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id) {
+        $acceptHeader = $request->header('Accept');
+        $contentTypeHeader = $request->header('Content-Type');
+        $petugas = Petugas::find($id);
+
+        if (!$petugas) {
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'Object not Found'
+            ], 404);
+        }
+
         if (Gate::denies('admin')) {
             return response()->json([
                 'success' => false,
@@ -176,9 +188,6 @@ class PetugasController extends Controller {
             ], 403);
         }
     
-        $acceptHeader = $request->header('Accept');
-        $contentTypeHeader = $request->header('Content-Type');
-
         $input = $request->all();
 
         // Validation Rules
@@ -197,16 +206,6 @@ class PetugasController extends Controller {
 
         if ($acceptHeader === 'application/json' || $acceptHeader === 'application/xml') {
             if (Auth::guard('admin')->user()->role === 'super admin' || $id == Auth::guard('admin')->user()->petugas_id) {
-                $petugas = Petugas::find($id);
-
-                if (!$petugas) {
-                    return response()->json([
-                        'success' => false,
-                        'status' => 404,
-                        'message' => 'Object not Found'
-                    ], 404);
-                }
-
                 $petugas->fill($input);
                 $petugas->save();
 
@@ -240,6 +239,17 @@ class PetugasController extends Controller {
      * @return \Illuminate\Http\Response
      */
     public function destroy(Request $request, $id) {
+        $acceptHeader = $request->header('Accept');
+        $petugas = Petugas::find($id);
+
+        if (!$petugas) {
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'Object not Found'
+            ], 404);
+        }
+        
         if (Gate::denies('admin')) {
             return response()->json([
                 'success' => false,
@@ -248,20 +258,8 @@ class PetugasController extends Controller {
             ], 403);
         }
         
-        $acceptHeader = $request->header('Accept');
-
         if ($acceptHeader === 'application/json' || $acceptHeader === 'application/xml') {
             if (Auth::guard('admin')->user()->role === 'super admin' || $id == Auth::guard('admin')->user()->petugas_id) {
-                $petugas = Petugas::find($id);
-
-                if (!$petugas) {
-                    return response()->json([
-                        'success' => false,
-                        'status' => 404,
-                        'message' => 'Object not Found'
-                    ], 404);
-                }
-
                 $petugas->delete();
                 $response = [
                     'message' => 'Deleted Successfully!',

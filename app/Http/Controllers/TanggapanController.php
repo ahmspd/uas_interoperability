@@ -298,6 +298,16 @@ class TanggapanController extends Controller {
     public function destroy(Request $request, $id) {
         $acceptHeader = $request->header('Accept');
         
+        $tanggapan = Tanggapan::find($id);
+
+        if (!$tanggapan) {
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'Object not Found'
+            ], 404);
+        }
+
         if (Gate::denies('admin')) {
             return response()->json([
                 'success' => false,
@@ -306,18 +316,7 @@ class TanggapanController extends Controller {
             ], 403);
         }
 
-
         if ($acceptHeader === 'application/json' || $acceptHeader === 'application/xml') {
-            $tanggapan = Tanggapan::find($id);
-
-            if (!$tanggapan) {
-                return response()->json([
-                    'success' => false,
-                    'status' => 404,
-                    'message' => 'Object not Found'
-                ], 404);
-            }
-
             $tanggapan->delete();
             $response = [
                 'message' => 'Deleted Successfully!',

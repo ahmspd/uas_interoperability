@@ -15,11 +15,20 @@ class KeluhanController extends Controller {
      */
     public function index(Request $request) {
         $acceptHeader = $request->header('Accept');
+        $id = Auth::guard('user')->user()->user_id;
 
         if (Gate::allows('admin')) {
             $keluhan = Keluhan::OrderBy("keluhan_id", "DESC")->paginate(10)->toArray();
         } else {
-            $keluhan = Keluhan::Where(['user_id' => Auth::guard('user')->user()->user_id])->OrderBy("user_id", "DESC")->paginate(2)->toArray();
+            $keluhan = Keluhan::Where(['user_id' => $id])->OrderBy("keluhan_id", "DESC")->paginate(2)->toArray();
+        }
+
+        if (!$keluhan) {
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'Data not Found!'
+            ], 404);
         }
 
          if ($acceptHeader === 'application/json' || $acceptHeader === 'application/xml') {
@@ -128,10 +137,9 @@ class KeluhanController extends Controller {
      */
     public function show(Request $request, $id) {
         $acceptHeader = $request->header('Accept');
-        
         $keluhan = Keluhan::find($id);
-
-        if (!$keluhan || $keluhan->user_id != Auth::guard('user')->user()->user_id) {
+        
+        if (!$keluhan) {
             return response()->json([
                 'success' => false,
                 'status' => 404,
@@ -139,6 +147,16 @@ class KeluhanController extends Controller {
             ], 404);
         }
 
+        if (Gate::denies('admin')) {
+            if ($keluhan->user_id != Auth::guard('user')->user()->user_id) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 403,
+                    'message' => 'You are Unauthorized'
+                ], 403);
+            }
+        }
+    
         if ($acceptHeader === 'application/json' || $acceptHeader === 'application/xml') {
             // Response Accept : 'application/json'
             if ($acceptHeader === 'application/json') {
@@ -170,11 +188,30 @@ class KeluhanController extends Controller {
         
         $imageName = Keluhan::Where('keluhan_id',$id_keluhan)->pluck('foto_keluhan')->first();
 
-        if ($keluhan->user_id != Auth::guard('user')->user()->user_id) {
-            abort(404);
+        if (!$keluhan) {
+            return response()->json([
+                'success' => false,
+                'status' => 403,
+                'message' => 'Data not Found'
+            ], 404);
         }
 
-        //$a = $imageName->foto_keluhan;
+        if (!$imageName) {
+            return response()->json([
+                'success' => false,
+                'status' => 403,
+                'message' => 'Data not Found'
+            ], 404);
+        }
+
+        if ($keluhan->user_id != Auth::guard('user')->user()->user_id) {
+            return response()->json([
+                'success' => false,
+                'status' => 403,
+                'message' => 'You are Unauthorized'
+            ], 403);
+        }
+
         $imagePath = storage_path('uploads/foto_keluhan').'/'.$imageName;
         if(file_exists($imagePath)){
             $file = file_get_contents($imagePath);
@@ -200,20 +237,20 @@ class KeluhanController extends Controller {
         
         $keluhan = Keluhan::find($id);
         
-        if (Gate::allows('admin') || $keluhan->user_id != Auth::guard('user')->user()->user_id) {
-            return response()->json([
-                'success' => false,
-                'status' => 403,
-                'message' => 'You are Unauthorized'
-            ], 403);
-        }
-
         if (!$keluhan) {
             return response()->json([
                 'success' => false,
                 'status' => 404,
                 'message' => 'Object not Found'
             ], 404);
+        }
+
+        if (Gate::allows('admin') || $keluhan->user_id != Auth::guard('user')->user()->user_id) {
+            return response()->json([
+                'success' => false,
+                'status' => 403,
+                'message' => 'You are Unauthorized'
+            ], 403);
         }
 
         $input = $request->all();
@@ -280,6 +317,14 @@ class KeluhanController extends Controller {
     public function destroy(Request $request, $id) {
         $acceptHeader = $request->header('Accept');
         $keluhan = Keluhan::find($id);
+        
+        if(!$keluhan) {
+            return response()->json([
+                'success' => false,
+                'status' => 404,
+                'message' => 'Object not Found'
+            ], 404);
+        }
 
         if (Gate::allows('admin') || $keluhan->user_id != Auth::guard('user')->user()->user_id) {
             return response()->json([
@@ -287,14 +332,6 @@ class KeluhanController extends Controller {
                 'status' => 403, 
                 'message' => 'You are Unauthorized'
             ], 403);
-        }
-
-        if(!$keluhan) {
-            return response()->json([
-                'success' => false,
-                'status' => 404,
-                'message' => 'Object not Found'
-            ], 404);
         }
 
         if ($acceptHeader === 'application/json' || $acceptHeader === 'application/xml') {   
