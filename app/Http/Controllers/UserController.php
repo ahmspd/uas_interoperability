@@ -160,7 +160,6 @@ class UserController extends Controller {
 						$xml = new \SimpleXMLElement('<User/>');
 
 						$xml->addChild('user_id', $user->user_id);
-						$xml->AddChild('nik', $user->nik);
 						$xml->AddChild('nama', $user->nama);
 						$xml->AddChild('email', $user->email);
 						$xml->AddChild('password', $user->password);
